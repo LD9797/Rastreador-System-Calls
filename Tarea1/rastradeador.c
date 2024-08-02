@@ -15,6 +15,11 @@ const char* get_syscall_name(long syscall_number) {
     return seccomp_syscall_resolve_num_arch(SCMP_ARCH_X86_64, syscall_number);
 }
 
+const char* get_error_description(long retval) {
+    if (retval >= 0) return "";
+    return strerror(-retval);
+}
+
 void run_target(const char* programname) {
     printf("Target started. Program name: %s\n", programname);
     // Allow tracing of this process
@@ -84,7 +89,8 @@ void run_tracer(pid_t child_pid, int verbose, int pause) {
 #error "Unsupported architecture"
 #endif
 
-        printf(" = %ld\n", retval);
+        const char* error_desc = get_error_description(retval);
+        printf(" = %ld (%s)\n", retval, error_desc);
 
         if (pause) {
             printf("Press enter to continue...\n");
