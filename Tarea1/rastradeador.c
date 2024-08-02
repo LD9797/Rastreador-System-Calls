@@ -61,9 +61,9 @@ void run_tracer(pid_t child_pid, int verbose, int pause) {
 
         const char* syscall_name = get_syscall_name(syscall_number);
         if (verbose) {
-            printf("Hi systemcall\n");
+            printf("Hi systemcall found:\n");
         }
-        printf("System call: %s(%ld, %ld, %ld)\n", syscall_name, arg1, arg2, arg3);
+        printf("System call: %s(%ld, %ld, %ld)", syscall_name, arg1, arg2, arg3);
 
         // Continue the child process until the next system call entry or exit
         if (ptrace(PTRACE_SYSCALL, child_pid, NULL, NULL) < 0) {

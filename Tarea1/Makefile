@@ -10,3 +10,9 @@ clean:
 
 run: build_example build_main
 	./rastradeador test_program
+
+run1: build_example build_main
+	./rastradeador test_program  -v
+
+run2: build_example build_main
+	./rastradeador test_program  -V
