@@ -1,3 +1,6 @@
+configure:
+	sudo apt-get install -y libseccomp-dev
+
 build_example:
 	gcc -o test_program test_program.c
 
