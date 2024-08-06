@@ -11,6 +11,7 @@
 #include <string.h>
 #include <termios.h>
 
+
 // Define a maximum number of syscalls for simplicity
 #define MAX_SYSCALLS 1024
 
@@ -48,7 +49,8 @@ void add_syscall_count(long syscall_number) {
     }
 }
 
-void run_target(const char* programname) {
+void run_target(const char* programname, char* const argv[]) {
+    
     printf("Target started. Program name: %s\n", programname);
     // Allow tracing of this process
     if (ptrace(PTRACE_TRACEME, 0, NULL, NULL) < 0) {
@@ -56,7 +58,11 @@ void run_target(const char* programname) {
         exit(1);
     }
     // Replace this process with the target program
-    execl(programname, programname, NULL);
+    // execl(programname, programname, NULL);
+    execv(programname, argv);
+    // If execv returns, it must have failed
+    perror("execv");
+    exit(1);
 }
 
 void set_non_canonical_mode(struct termios* orig_termios) {
@@ -200,7 +206,7 @@ int main(int argc, char* argv[]) {
                 pause = 1;
                 break;
             default:
-                fprintf(stderr, "Usage: %s [-v] [-V] <program to trace>\n", argv[0]);
+                fprintf(stderr, "Usage: %s [-v] [-V] <program to trace> [program args...]\n", argv[0]);
                 return 1;
         }
     }
@@ -216,7 +222,7 @@ int main(int argc, char* argv[]) {
     if (child_pid == 0) {
         // Child process: Run the target program
         if (programname) {
-            run_target(programname);
+            run_target(programname, &argv[optind]);
         } else {
             // If no program, exit the child process
             exit(0);

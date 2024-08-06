@@ -6,16 +6,20 @@ build_example:
 
 build_main:
 	# sudo apt-get install libseccomp-dev
-	gcc -o rastradeador rastradeador.c -lseccomp
+	gcc -o rastreador rastreador.c -lseccomp
 
 clean:
-	rm rastradeador test_program
+	rm rastreador test_program
 
 run: build_example build_main
-	./rastradeador test_program
+	./rastreador test_program
 
 run1: build_example build_main
-	./rastradeador test_program  -v
+	./rastreador test_program  -v
 
 run2: build_example build_main
-	./rastradeador test_program  -V
+	./rastreador test_program  -V
+
+run3: build_main
+	./rastreador /usr/bin/tail test_file.txt
+

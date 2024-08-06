@@ -1,1 +1,44 @@
 This is a test file.
+E “System Calls”
+El prop´osito de esta tarea es darle familiaridad con el
+ambiente Linux y aplicaciones de Sistemas Operativos. Toda
+la programaci´on debe realizarse en C sobre Linux. Por favor,
+no use un IDE, ni nada innecesariamente complicado.
+Su programa tendr´a la misi´on de poner a ejecutar a otro
+programa (dig´amosle Prog), pasarle los argumentos seleccionados
+por el usuario y rastrear todos los system calls utilizados
+por Prog.
+La sintaxis de ejecuci´on desde l´ınea de comando es:
+rastreador [opciones rastreador] Prog
+[opciones de Prog]
+Las [opciones rastreador] podr´ıan no venir del
+todo o aparecer en cualquier orden o combinaci´on v´alida.
+En todo caso, al final de la ejecuci´on de Prog,
+rastreador siempre desplegar´a en la salida est´andar una
+tabla acumulativa que muestre todos los System Calls utilizados
+por Prog, as´ı como el n´umero de veces que fue utilizado
+cada uno.
+Las [opciones de Prog] no ser´an analizadas ni consideradas
+por rastreador, sino que simplemente ser´an
+pasadas a Prog al iniciar su ejecuci´on.
+Las opciones v´alidas para rastreador son:
+-v desplegar´a un mensaje cada vez que detecte un
+System Call de Prog . Se debe desplegar la mayor
+cantidad posible de detalles respecto a cada System
+Call.
+-V ser´a id´entico a la opci´on -v , pero har´a una pausa
+hasta que el usuario presione cualquier tecla para
+continuar la ejecuci´on de Prog .
+Esta tarea corta se desarrollar´a en los grupos de
+proyecto.
+Enviar un .tgz a torresrojas.cursos.01@gmail.com
+antes de las 11:59pm del Domingo 11 de Agosto del
+2024 cuyo nombre sea la concatenaci´on de los apellidos
+del grupo con may´usculas al inicio de cada uno (e.g.,
+Torres-Venegas-Araya-Perez.tgz) que contenga el
+fuente, un makefile, un readme que explique como se usa su
+programa, especialmente cualquier opci´on extra incluida, y
+mencionando todo lo que NO funcione de su proyecto.
+Identifique claramente su correo con el siguiente subject:
+[SOA] Tarea Corta 1 - Apellido 1 -
+Apellido 2 - etc.
