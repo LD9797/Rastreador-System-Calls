@@ -10,12 +10,14 @@
 #include <seccomp.h>
 #include <string.h>
 #include <termios.h>
+#include <stddef.h>
+#include <sys/syscall.h>
+#include <fcntl.h>
 
-
-// Define a maximum number of syscalls for simplicity
 #define MAX_SYSCALLS 1024
+#define MAX_PATH_LENGTH 4096
+#define MAX_BUFFER_LENGTH 256  // Limit the size of buffer content to print for write
 
-// Data structure to store syscall counts
 typedef struct {
     long syscall_number;
     int count;
@@ -24,7 +26,6 @@ typedef struct {
 syscall_count_t syscall_counts[MAX_SYSCALLS];
 size_t syscall_count_size = 0;
 
-// Get system call name using libseccomp
 const char* get_syscall_name(long syscall_number) {
     return seccomp_syscall_resolve_num_arch(SCMP_ARCH_X86_64, syscall_number);
 }
@@ -34,7 +35,6 @@ const char* get_error_description(long retval) {
     return strerror(-retval);
 }
 
-// Add a syscall count entry
 void add_syscall_count(long syscall_number) {
     for (size_t i = 0; i < syscall_count_size; ++i) {
         if (syscall_counts[i].syscall_number == syscall_number) {
@@ -50,17 +50,12 @@ void add_syscall_count(long syscall_number) {
 }
 
 void run_target(const char* programname, char* const argv[]) {
-    
     printf("Target started. Program name: %s\n", programname);
-    // Allow tracing of this process
     if (ptrace(PTRACE_TRACEME, 0, NULL, NULL) < 0) {
         perror("ptrace");
         exit(1);
     }
-    // Replace this process with the target program
-    // execl(programname, programname, NULL);
     execv(programname, argv);
-    // If execv returns, it must have failed
     perror("execv");
     exit(1);
 }
@@ -86,24 +81,86 @@ void restore_terminal_mode(const struct termios* orig_termios) {
     }
 }
 
+char* read_string_from_child(pid_t child_pid, unsigned long addr) {
+    static char buf[MAX_PATH_LENGTH];
+    size_t len = 0;
+    unsigned long word;
+    while (len < MAX_PATH_LENGTH) {
+        errno = 0;
+        word = ptrace(PTRACE_PEEKDATA, child_pid, addr + len, NULL);
+        if (errno != 0) {
+            break;
+        }
+        memcpy(buf + len, &word, sizeof(word));
+        if (memchr(&word, 0, sizeof(word)) != NULL) {
+            break;
+        }
+        len += sizeof(word);
+    }
+    buf[MAX_PATH_LENGTH - 1] = '\0';
+    return buf;
+}
+
+void read_buffer_from_child(pid_t child_pid, unsigned long addr, size_t length, char* buf) {
+    size_t len = 0;
+    unsigned long word;
+    while (len < length) {
+        errno = 0;
+        word = ptrace(PTRACE_PEEKDATA, child_pid, addr + len, NULL);
+        if (errno != 0) {
+            break;
+        }
+        size_t bytes_to_copy = sizeof(word);
+        if (len + bytes_to_copy > length) {
+            bytes_to_copy = length - len;
+        }
+        memcpy(buf + len, &word, bytes_to_copy);
+        len += bytes_to_copy;
+    }
+}
+
+void print_syscall_args(pid_t child_pid, long syscall_number, long arg1, long arg2, long arg3, long arg4, long arg5, long arg6) {
+    switch (syscall_number) {
+        case SYS_openat: {
+            const char* pathname = read_string_from_child(child_pid, arg2);
+            if (arg1 == AT_FDCWD) {
+                printf(" (dirfd=AT_FDCWD, pathname=\"%s\", flags=%ld, mode=%ld)", pathname, arg3, arg4);
+            } else {
+                printf(" (dirfd=%ld, pathname=\"%s\", flags=%ld, mode=%ld)", arg1, pathname, arg3, arg4);
+            }
+            break;
+        }
+        case SYS_write: {
+            char buffer[MAX_BUFFER_LENGTH + 1] = {0};
+            size_t length = (arg3 < MAX_BUFFER_LENGTH) ? arg3 : MAX_BUFFER_LENGTH;
+            read_buffer_from_child(child_pid, arg2, length, buffer);
+            printf(" (fd=%ld, buf=\"%.*s\", count=%ld)", arg1, (int)length, buffer, arg3);
+            break;
+        }
+        case SYS_read:
+            printf(" (fd=%ld, buf=0x%lx, count=%ld)", arg1, arg2, arg3);
+            break;
+        default:
+            printf(" (%ld, %ld, %ld, %ld, %ld, %ld)", arg1, arg2, arg3, arg4, arg5, arg6);
+            break;
+    }
+}
+
 void run_tracer(pid_t child_pid, int verbose, int pause) {
     int status;
     struct termios orig_termios;
 
-    // Set terminal to non-canonical mode if -V is specified
     if (pause) {
         set_non_canonical_mode(&orig_termios);
     }
 
     while (1) {
-        // Wait for child process to change state
         if (waitpid(child_pid, &status, 0) < 0) {
             perror("waitpid");
             exit(1);
         }
         if (WIFEXITED(status)) break;
 
-        // Get the system call number
         struct user_regs_struct regs;
         if (ptrace(PTRACE_GETREGS, child_pid, NULL, &regs) < 0) {
             perror("ptrace");
@@ -115,40 +172,46 @@ void run_tracer(pid_t child_pid, int verbose, int pause) {
         long arg1 = regs.rdi;
         long arg2 = regs.rsi;
         long arg3 = regs.rdx;
+        long arg4 = regs.r10;
+        long arg5 = regs.r8;
+        long arg6 = regs.r9;
 #elif __i386__
         long syscall_number = regs.orig_eax;
         long arg1 = regs.ebx;
         long arg2 = regs.ecx;
         long arg3 = regs.edx;
+        long arg4 = regs.esi;
+        long arg5 = regs.edi;
+        long arg6 = regs.ebp;
 #else
 #error "Unsupported architecture"
 #endif
 
         const char* syscall_name = get_syscall_name(syscall_number);
         if (verbose) {
-            printf("System call: %s(%ld, %ld, %ld)\n", syscall_name, arg1, arg2, arg3);
+            printf("System call: %s", syscall_name);
+            print_syscall_args(child_pid, syscall_number, arg1, arg2, arg3, arg4, arg5, arg6);
+            printf("\n");
         }
         if (pause) {
-            printf("System call: %s(%ld, %ld, %ld)\n", syscall_name, arg1, arg2, arg3);
+            printf("System call: %s", syscall_name);
+            print_syscall_args(child_pid, syscall_number, arg1, arg2, arg3, arg4, arg5, arg6);
+            printf("\n");
         }
 
-        // Increment the syscall count
         add_syscall_count(syscall_number);
 
-        // Continue the child process until the next system call entry or exit
         if (ptrace(PTRACE_SYSCALL, child_pid, NULL, NULL) < 0) {
             perror("ptrace");
             exit(1);
         }
 
-        // Wait for the system call to exit
         if (waitpid(child_pid, &status, 0) < 0) {
             perror("waitpid");
             exit(1);
         }
         if (WIFEXITED(status)) break;
 
-        // Get the return value of the system call
         if (ptrace(PTRACE_GETREGS, child_pid, NULL, &regs) < 0) {
             perror("ptrace");
             exit(1);
@@ -162,28 +225,27 @@ void run_tracer(pid_t child_pid, int verbose, int pause) {
 #error "Unsupported architecture"
 #endif
 
-        //const char* error_desc = get_error_description(retval);
-        //printf(" = %ld (%s)\n", retval, error_desc);
+        // const char* error_desc = get_error_description(retval);
+        // if (verbose || pause) {
+        //     printf(" = %ld (%s)\n", retval, error_desc);
+        // }
 
         if (pause) {
             printf("Press any key to continue...\n");
-            fflush(stdout);  // Ensure the prompt is printed before waiting for input
+            fflush(stdout);
             getchar();
         }
 
-        // Continue the child process until the next system call entry or exit
         if (ptrace(PTRACE_SYSCALL, child_pid, NULL, NULL) < 0) {
             perror("ptrace");
             exit(1);
         }
     }
 
-    // Restore terminal mode if it was changed
     if (pause) {
         restore_terminal_mode(&orig_termios);
     }
 
-    // Print syscall counts at the end of tracing
     printf("\nSystem Call Counts:\n");
     printf("%-30s %-10s\n", "System Call Name", "Count");
     for (size_t i = 0; i < syscall_count_size; ++i) {
@@ -196,7 +258,7 @@ int main(int argc, char* argv[]) {
     int verbose = 0;
     int pause = 0;
     int opt;
-    
+
     while ((opt = getopt(argc, argv, "vV")) != -1) {
         switch (opt) {
             case 'v':
@@ -212,27 +274,19 @@ int main(int argc, char* argv[]) {
     }
 
     if (optind >= argc) {
-        // If no program is specified, we still need to initialize tracing
-        printf("No program specified. Only showing syscall counts after initialization.\n");
+        printf("No program specified. Only showing syscall counts\n");
+        return 0;
     }
 
-    const char* programname = (optind < argc) ? argv[optind] : NULL;
-
     pid_t child_pid = fork();
-    if (child_pid == 0) {
-        // Child process: Run the target program
-        if (programname) {
-            run_target(programname, &argv[optind]);
-        } else {
-            // If no program, exit the child process
-            exit(0);
-        }
-    } else if (child_pid > 0) {
-        // Parent process: Run the tracer
-        run_tracer(child_pid, verbose, pause);
-    } else {
+    if (child_pid < 0) {
         perror("fork");
         return 1;
+    }
+    if (child_pid == 0) {
+        run_target(argv[optind], &argv[optind]);
+    } else {
+        run_tracer(child_pid, verbose, pause);
     }
 
     return 0;
