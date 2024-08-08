@@ -21,5 +21,5 @@ run2: build_example build_main
 	./rastreador test_program  -V
 
 run3: build_main
-	./rastreador /usr/bin/tail test_file.txt
+	./rastreador -v /usr/bin/tail test_file.txt
 
