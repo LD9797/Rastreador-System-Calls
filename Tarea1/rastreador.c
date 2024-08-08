@@ -81,27 +81,7 @@ void restore_terminal_mode(const struct termios* orig_termios) {
     }
 }
 
-char* read_string_from_child(pid_t child_pid, unsigned long addr) {
-    static char buf[MAX_PATH_LENGTH];
-    size_t len = 0;
-    unsigned long word;
-    while (len < MAX_PATH_LENGTH) {
-        errno = 0;
-        word = ptrace(PTRACE_PEEKDATA, child_pid, addr + len, NULL);
-        if (errno != 0) {
-            break;
-        }
-        memcpy(buf + len, &word, sizeof(word));
-        if (memchr(&word, 0, sizeof(word)) != NULL) {
-            break;
-        }
-        len += sizeof(word);
-    }
-    buf[MAX_PATH_LENGTH - 1] = '\0';
-    return buf;
-}
-
-void read_buffer_from_child(pid_t child_pid, unsigned long addr, size_t length, char* buf) {
+void read_from_child(pid_t child_pid, unsigned long addr, size_t length, char* buf, int read_until_null) {
     size_t len = 0;
     unsigned long word;
     while (len < length) {
@@ -115,14 +95,31 @@ void read_buffer_from_child(pid_t child_pid, unsigned long addr, size_t length, 
             bytes_to_copy = length - len;
         }
         memcpy(buf + len, &word, bytes_to_copy);
+        if (read_until_null && memchr(&word, 0, bytes_to_copy) != NULL) {
+            break;
+        }
         len += bytes_to_copy;
     }
+    if (read_until_null) {
+        buf[length - 1] = '\0';
+    }
+}
+
+char* read_string_from_child(pid_t child_pid, unsigned long addr) {
+    static char buf[MAX_PATH_LENGTH];
+    read_from_child(child_pid, addr, MAX_PATH_LENGTH, buf, 1);
+    return buf;
+}
+
+void read_buffer_from_child(pid_t child_pid, unsigned long addr, size_t length, char* buf) {
+    read_from_child(child_pid, addr, length, buf, 0);
 }
 
 void print_syscall_args(pid_t child_pid, long syscall_number, long arg1, long arg2, long arg3, long arg4, long arg5, long arg6) {
     switch (syscall_number) {
         case SYS_openat: {
             const char* pathname = read_string_from_child(child_pid, arg2);
+            //const char* pathname = read_buffer_from_child(child_pid, arg2);
             if (arg1 == AT_FDCWD) {
                 printf(" (dirfd=AT_FDCWD, pathname=\"%s\", flags=%ld, mode=%ld)", pathname, arg3, arg4);
             } else {
