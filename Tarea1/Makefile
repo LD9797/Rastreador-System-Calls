@@ -6,7 +6,7 @@ build_example:
 
 build_main:
 	# sudo apt-get install libseccomp-dev
-	gcc -o rastreador Source/rastreador.c Source/file_utils.c Source/syscall_utils.c Source/terminal_utils.c -lseccomp
+	gcc -o rastreador Source/*.c -lseccomp
 
 clean:
 	rm rastreador Auxiliary/test_program
