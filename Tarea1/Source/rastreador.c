@@ -10,6 +10,7 @@
 #include <seccomp.h>
 #include <string.h>
 #include <termios.h>
+#include "../Headers/utils.h"
 
 
 // Define a maximum number of syscalls for simplicity
@@ -49,20 +50,22 @@ void add_syscall_count(long syscall_number) {
     }
 }
 
-void run_target(const char* programname, char* const argv[]) {
-    
-    printf("Target started. Program name: %s\n", programname);
-    // Allow tracing of this process
-    if (ptrace(PTRACE_TRACEME, 0, NULL, NULL) < 0) {
-        perror("ptrace");
-        exit(1);
-    }
-    // Replace this process with the target program
-    // execl(programname, programname, NULL);
-    execv(programname, argv);
-    // If execv returns, it must have failed
-    perror("execv");
-    exit(1);
+void run_target(const char *program_name, char *const argv[]) {
+  // Allow tracing of this process
+  if (ptrace(PTRACE_TRACEME, 0, NULL, NULL) < 0) {
+	perror("ptrace");
+	exit(EXIT_FAILURE);
+  }
+
+  // Print the message after ensuring ptrace succeeded
+  printf("Target started. Program name: %s\n", program_name);
+
+  // Replace this process with the target program
+  execv(program_name, argv);
+
+  // If execv returns, it must have failed
+  perror("execv");
+  exit(EXIT_FAILURE);
 }
 
 void set_non_canonical_mode(struct termios* orig_termios) {
@@ -196,7 +199,7 @@ int main(int argc, char* argv[]) {
     int verbose = 0;
     int pause = 0;
     int opt;
-    
+
     while ((opt = getopt(argc, argv, "vV")) != -1) {
         switch (opt) {
             case 'v':
@@ -216,17 +219,17 @@ int main(int argc, char* argv[]) {
         printf("No program specified. Only showing syscall counts after initialization.\n");
     }
 
-    const char* programname = (optind < argc) ? argv[optind] : NULL;
+    const char* program_name = (optind < argc) ? argv[optind] : NULL;
+
+	// Checking if the program exists.
+	if (program_exists(program_name) == 1){
+	  return 1;
+	}
 
     pid_t child_pid = fork();
     if (child_pid == 0) {
         // Child process: Run the target program
-        if (programname) {
-            run_target(programname, &argv[optind]);
-        } else {
-            // If no program, exit the child process
-            exit(0);
-        }
+		run_target(program_name, &argv[optind]);
     } else if (child_pid > 0) {
         // Parent process: Run the tracer
         run_tracer(child_pid, verbose, pause);

@@ -8,6 +8,9 @@ build_main:
 	# sudo apt-get install libseccomp-dev
 	gcc -o rastreador rastreador.c -lseccomp
 
+alt_build_main:
+	gcc -I Headers -o rastreador Source/rastreador.c Source/util.c -lseccomp
+
 clean:
 	rm rastreador test_program
 
