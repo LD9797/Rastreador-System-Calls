@@ -12,7 +12,6 @@
 #include <termios.h>
 #include <stddef.h>
 #include <sys/syscall.h>
-#include <fcntl.h>
 
 #define MAX_SYSCALLS 1024
 #define MAX_PATH_LENGTH 4096
@@ -28,11 +27,6 @@ size_t syscall_count_size = 0;
 
 const char* get_syscall_name(long syscall_number) {
     return seccomp_syscall_resolve_num_arch(SCMP_ARCH_X86_64, syscall_number);
-}
-
-const char* get_error_description(long retval) {
-    if (retval >= 0) return "";
-    return strerror(-retval);
 }
 
 void add_syscall_count(long syscall_number) {
@@ -119,12 +113,7 @@ void print_syscall_args(pid_t child_pid, long syscall_number, long arg1, long ar
     switch (syscall_number) {
         case SYS_openat: {
             const char* pathname = read_string_from_child(child_pid, arg2);
-            //const char* pathname = read_buffer_from_child(child_pid, arg2);
-            if (arg1 == AT_FDCWD) {
-                printf(" (dirfd=AT_FDCWD, pathname=\"%s\", flags=%ld, mode=%ld)", pathname, arg3, arg4);
-            } else {
-                printf(" (dirfd=%ld, pathname=\"%s\", flags=%ld, mode=%ld)", arg1, pathname, arg3, arg4);
-            }
+            printf(" (dirfd=%ld, pathname=\"%s\", flags=%ld, mode=%ld)", arg1, pathname, arg3, arg4);
             break;
         }
         case SYS_write: {
@@ -134,9 +123,13 @@ void print_syscall_args(pid_t child_pid, long syscall_number, long arg1, long ar
             printf(" (fd=%ld, buf=\"%.*s\", count=%ld)", arg1, (int)length, buffer, arg3);
             break;
         }
-        case SYS_read:
-            printf(" (fd=%ld, buf=0x%lx, count=%ld)", arg1, arg2, arg3);
+        case SYS_read: {
+            char buffer[MAX_BUFFER_LENGTH + 1] = {0};
+            size_t length = (arg3 < MAX_BUFFER_LENGTH) ? arg3 : MAX_BUFFER_LENGTH;
+            read_buffer_from_child(child_pid, arg2, length, buffer);
+            printf(" (fd=%ld, buf=\"%.*s\", count=%ld)", arg1, (int)length, buffer, arg3);
             break;
+        }
         default:
             printf(" (%ld, %ld, %ld, %ld, %ld, %ld)", arg1, arg2, arg3, arg4, arg5, arg6);
             break;
@@ -172,14 +165,6 @@ void run_tracer(pid_t child_pid, int verbose, int pause) {
         long arg4 = regs.r10;
         long arg5 = regs.r8;
         long arg6 = regs.r9;
-#elif __i386__
-        long syscall_number = regs.orig_eax;
-        long arg1 = regs.ebx;
-        long arg2 = regs.ecx;
-        long arg3 = regs.edx;
-        long arg4 = regs.esi;
-        long arg5 = regs.edi;
-        long arg6 = regs.ebp;
 #else
 #error "Unsupported architecture"
 #endif
@@ -213,19 +198,6 @@ void run_tracer(pid_t child_pid, int verbose, int pause) {
             perror("ptrace");
             exit(1);
         }
-
-#ifdef __x86_64__
-        long retval = regs.rax;
-#elif __i386__
-        long retval = regs.eax;
-#else
-#error "Unsupported architecture"
-#endif
-
-        // const char* error_desc = get_error_description(retval);
-        // if (verbose || pause) {
-        //     printf(" = %ld (%s)\n", retval, error_desc);
-        // }
 
         if (pause) {
             printf("Press any key to continue...\n");
