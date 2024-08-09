@@ -5,11 +5,15 @@
 #include <stddef.h>
 #include <string.h>
 #include <errno.h>
+#include <seccomp.h>
 
 syscall_count_t syscall_counts[MAX_SYSCALLS];
 size_t syscall_count_size = 0;
 
-// Process Interaction utility functions
+const char* get_syscall_name(long syscall_number) {
+  return seccomp_syscall_resolve_num_arch(SCMP_ARCH_X86_64, syscall_number);
+}
+
 void read_from_child(pid_t child_pid, unsigned long addr, size_t length, char* buf, int read_until_null) {
   size_t len = 0;
   unsigned long word;

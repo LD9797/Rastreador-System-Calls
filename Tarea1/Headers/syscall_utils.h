@@ -21,5 +21,6 @@ extern size_t syscall_count_size;
 
 void add_syscall_count(long syscall_number);
 void print_syscall_args(pid_t child_pid, long syscall_number, long arg1, long arg2, long arg3, long arg4, long arg5, long arg6);
+const char* get_syscall_name(long syscall_number);
 
 #endif
