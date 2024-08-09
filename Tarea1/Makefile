@@ -9,16 +9,16 @@ build_main:
 	gcc -o rastreador Source/*.c -lseccomp
 
 clean:
-	rm rastreador Auxiliary/test_program
+	rm rastreador Auxiliary/test_program test_file.txt
 
 run: build_example build_main
-	./rastreador Auxiliary/test_program
+	./rastreador Auxiliary/test_program Arg1 -Arg2
 
 run1: build_example build_main
-	./rastreador Auxiliary/test_program  -v
+	./rastreador -v Auxiliary/test_program Arg1 -Arg2
 
 run2: build_example build_main
-	./rastreador Auxiliary/test_program  -V
+	./rastreador -V Auxiliary/test_program -Arg1 Arg2
 
 run3: build_main
 	./rastreador -v /usr/bin/tail test_file.txt

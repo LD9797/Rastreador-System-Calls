@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <termios.h>
 #include <stddef.h>
+#include <string.h>
 #include "../Headers/syscall_utils.h"
 #include "../Headers/file_utils.h"
 #include "../Headers/terminal_utils.h"
@@ -111,28 +112,38 @@ void run_tracer(pid_t child_pid, int verbose, int pause) {
 int main(int argc, char* argv[]) {
     int verbose = 0;
     int pause = 0;
-    int opt;
 
-    while ((opt = getopt(argc, argv, "vV")) != -1) {
-        switch (opt) {
-            case 'v':
-                verbose = 1;
-                break;
-            case 'V':
-                pause = 1;
-                break;
-            default:
-                fprintf(stderr, "Usage: %s [-v] [-V] <program to trace> [program args...]\n", argv[0]);
-                return 1;
-        }
-    }
+  	 // Parsing the -v and -V options
+     // These options must be passed immediately after the executable name.
+     // All other arguments will be passed to the target program.
+     // This ensures strict adherence to the specification:
+	 // rastreador [opciones rastreador] Prog [opciones de Prog]
+  	int i;
+  	for (i = 1; i < argc; i++) {
+		if (strcmp(argv[i], "-v") == 0) {
+		  	verbose = 1;
+		} else if (strcmp(argv[i], "-V") == 0) {
+		  	pause = 1;
+		} else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "-H") == 0 ) {
+		  	fprintf(stderr, "Usage: %s [-v] [-V] <program to trace> [program args...]\n", argv[0]);
+			return 1;
+		} else if (argv[i][0] == '-') {
+		  	fprintf(stderr, "Unrecognized option: %s\n", argv[i]);
+		  	fprintf(stderr, "Usage: %s [-v] [-V] <program to trace> [program args...]\n", argv[0]);
+			return 1;
+		}
+		else {
+			break;
+		}
+  	}
 
-    if (optind >= argc) {
-        printf("No program specified. \n");
-        return 0;
-    }
+  	if (i >= argc) {
+		fprintf(stderr, "No program specified.\n");
+	  	fprintf(stderr, "Usage: %s [-v] [-V] <program to trace> [program args...]\n", argv[0]);
+		return 1;
+  	}
 
-  	const char* program_name = (optind < argc) ? argv[optind] : NULL;
+  	const char *program_name = argv[i];
 
   	if (program_exists(program_name) == 1){
 		return 1;
@@ -144,7 +155,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     if (child_pid == 0) {
-        run_target(program_name, &argv[optind]);
+        run_target(program_name, &argv[i]);
     } else {
         run_tracer(child_pid, verbose, pause);
     }
