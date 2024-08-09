@@ -125,7 +125,7 @@ int main(int argc, char* argv[]) {
 		} else if (strcmp(argv[i], "-V") == 0) {
 		  	pause = 1;
 		} else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "-H") == 0 ) {
-		  	fprintf(stderr, "Usage: %s [-v] [-V] <program to trace> [program args...]\n", argv[0]);
+		  	fprintf(stdout, "Usage: %s [-v] [-V] <program to trace> [program args...]\n", argv[0]);
 			return 1;
 		} else if (argv[i][0] == '-') {
 		  	fprintf(stderr, "Unrecognized option: %s\n", argv[i]);
