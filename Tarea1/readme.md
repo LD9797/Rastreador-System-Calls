@@ -26,27 +26,27 @@ cual se pueden instalar dependencias y compilar el código fuente, además
 se puede probar rastreador con algunas combinaciones de programas y 
 comandos.
 
-Además el codigo fuente cuenta con un programa de prueba para rastrear, 
+El codigo fuente cuenta con un programa de prueba a rastrear, 
 el cual esta en `Auxiliary/test_program.c`. Este programa puede ser 
 construido con el Makefile provisto.
 
 ## Uso de rastreador
 
 
-La sintaxis de ejecucion desde lınea de comando es:
+La sintáxis de ejecución desde línea de comando es:
 
 ```rastreador [opciones rastreador] Prog [opciones de Prog] ```
 
 Donde `Prog` es el programa a ejecutar y `[opciones de Prog]` son los
-parametros que el usuario le pasa a `Prog`, rastreador ejecuta `Prog` en el
-background, pasandole sus argumentos, y despliega al final una tabla que 
+parámetros que el usuario le pasa a `Prog`, rastreador ejecuta `Prog` en el
+background, pasándole sus argumentos, y despliega al final una tabla que 
 sumariza el nombre de cada "System call" y la cantidad de veces que fue 
 ejecutada por `Prog`.
 
 ### Opciones rastreador
 
 -v despliega´a un mensaje cada vez que detecte un System Call de Prog. 
-Despliega el nombre del system call llamado, asi como los argumentos "crudos"
+Despliega el nombre del system call llamado, así como los argumentos "crudos"
 utilizados al llamar al syscall.
 
 En el caso de los siguientes System Calls, decodificamos los argumentos "crudos"
@@ -58,12 +58,12 @@ para mostrar hileras de texto y otros valores pasados a la rutina de sistema:
 
 
 -V igual que -v , pero hace una pausa entre cada llamada a `rastreador`
-despues de cada "system call" hasta que el usuario presione cualquier 
-tecla para continuar la ejecucion de Prog .
+después de cada "system call" hasta que el usuario presione cualquier 
+tecla para continuar la ejecución de Prog .
 
 ## CONSTRUCCION Y EJECUCION DE rastreador
 
-`make configure`: Se utiliza para instalar la unica dependencia de rastreador,
+`make configure`: Se utiliza para instalar la única dependencia de rastreador,
 la cual es libseccomp-dev.
 	
 `make build_example`: Compila y genera ejecutable para `test_program`. 
@@ -76,15 +76,15 @@ la cual es libseccomp-dev.
 
   ./rastreador Auxiliary/test_program Arg1 -Arg2
 
-`make run1`: Rastrea a test_program, con la opcion `-v` de `rastreador`, por ejemplo:
+`make run1`: Rastrea a test_program, con la opción `-v` de `rastreador`, por ejemplo:
 
 	./rastreador -v Auxiliary/test_program Arg1 -Arg2
 
-`make run2`: Rastrea a test_program, con la opcion `-V` de `rastreador`, por ejemplo:
+`make run2`: Rastrea a test_program, con la opción `-V` de `rastreador`, por ejemplo:
 
 	./rastreador -V Auxiliary/test_program -Arg1 Arg2
 
-`make run3`: Rastrea el programa `tail` del S.O., utilizando la opcion `-v` de rastreador:
+`make run3`: Rastrea el programa `tail` del S.O., utilizando la opción `-v` de rastreador:
 
 	./rastreador -v /usr/bin/tail test_file.txt
  
