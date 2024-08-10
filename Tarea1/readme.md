@@ -56,10 +56,11 @@ para mostrar hileras de texto y otros valores pasados a la rutina de sistema:
    * read
    * write
 
+Las opciones -v y -V son excluyentes.
 
 -V igual que -v , pero hace una pausa entre cada llamada a `rastreador`
 después de cada "system call" hasta que el usuario presione cualquier 
-tecla para continuar la ejecución de Prog .
+tecla para continuar la ejecución de Prog. Las opciones -v y -V son excluyentes.
 
 ## CONSTRUCCION Y EJECUCION DE rastreador
 
@@ -87,4 +88,13 @@ la cual es libseccomp-dev.
 `make run3`: Rastrea el programa `tail` del S.O., utilizando la opción `-v` de rastreador:
 
 	./rastreador -v /usr/bin/tail test_file.txt
- 
+
+## Lo que NO funciona
+
+- No se puede ejecutar `rastreador` con ambas opciones `-vV`, ni `Vv`, pues son excluyentes. Si
+se intenta se obtiene una respuesta como esta:
+
+```
+Unrecognized option: -vV
+Usage: ./rastreador [-v] [-V] <program to trace> [program args...]
+```
