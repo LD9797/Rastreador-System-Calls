@@ -3,7 +3,7 @@
 
 **Escuela de Ingeniería en Computación**
 
-**Maestría Académica en Ciencias de la Computación**_
+**Maestría Académica en Ciencias de la Computación**
 
 **Curso: Sistemas Operativos Avanzados**
 
