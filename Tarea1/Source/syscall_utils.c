@@ -11,7 +11,8 @@
 syscall_count_t syscall_counts[MAX_SYSCALLS];
 size_t syscall_count_size = 0;
 
-//Function used to get the name of the system call using the library seccomp, this avoids the need to manually translate the name of the system calls
+//Function used to get the name of the system call using the library seccomp, 
+//this avoids the need to manually translate the name of the system calls
 const char* get_syscall_name(long syscall_number) {
   return seccomp_syscall_resolve_num_arch(SCMP_ARCH_X86_64, syscall_number);
 }
@@ -72,7 +73,8 @@ void add_syscall_count(long syscall_number) {
   }
 }
 
-//Function to print more details on specific system calls arguments, manually checks the system call and then uses their respective functions to decode the arguments into a more readable format.
+//Function to print more details on specific system calls arguments, manually checks the system call 
+//and then uses their respective functions to decode the arguments into a more readable format.
 void print_syscall_args(pid_t child_pid, long syscall_number, long arg1, long arg2, long arg3, long arg4, long arg5, long arg6) {
   switch (syscall_number) {
 	case SYS_openat: {
