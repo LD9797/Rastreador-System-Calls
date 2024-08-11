@@ -28,7 +28,7 @@ comandos.
 
 El codigo fuente cuenta con un programa de prueba a rastrear, 
 el cual esta en `Auxiliary/test_program.c`. Este programa puede ser 
-construido con el Makefile provisto. El programa puede recibir "n" argumentos, los cuales serán impresos en la salida estandar y luego escritos en un archivo .txt.
+construido con el Makefile provisto. El programa puede recibir "n" argumentos, los cuales serán impresos en la salida estandar, posteriormente el programa abre un archivo de texto y escribe una línea en el mismo.
 
 ## Uso de rastreador
 
