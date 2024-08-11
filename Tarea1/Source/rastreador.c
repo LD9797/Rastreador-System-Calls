@@ -25,7 +25,8 @@ void run_target(const char* program_name, char* const argv[]) {
 
 //Run the tracer using ptrace
 void run_tracer(pid_t child_pid, int verbose, int pause) {
-    //This segment is used to switch between canonical mode and regular termina mode, allowing the "press any key" feature in the when running the -V option.
+    //This segment is used to switch between canonical mode and regular termina mode, 
+    //allowing the "press any key" feature in the when running the -V option.
     int status;
     struct termios orig_termios;
     
@@ -84,7 +85,8 @@ void run_tracer(pid_t child_pid, int verbose, int pause) {
         //Counts the system calls, for the summary table
         add_syscall_count(syscall_number);
 
-        //Uses PTRACE_SYSCALL to have the kernel stop the child process when it sees a system call and checks for any failure in ptrace, in which case will exit the program with an error code. Handles entry.
+        //Uses PTRACE_SYSCALL to have the kernel stop the child process when it sees a system call and checks for 
+	//any failure in ptrace, in which case will exit the program with an error code. Handles entry.
         if (ptrace(PTRACE_SYSCALL, child_pid, NULL, NULL) < 0) {
             perror("ptrace");
             exit(1);
@@ -110,7 +112,8 @@ void run_tracer(pid_t child_pid, int verbose, int pause) {
             getchar();
         }
 
-        //Uses PTRACE_SYSCALL to have the kernel stop the child process when it sees a system call and checks for any failure in ptrace, in which case will exit the program with an error code. Handles exit.
+        //Uses PTRACE_SYSCALL to have the kernel stop the child process when it sees a system call and checks 
+	//for any failure in ptrace, in which case will exit the program with an error code. Handles exit.
         if (ptrace(PTRACE_SYSCALL, child_pid, NULL, NULL) < 0) {
             perror("ptrace");
             exit(1);
