@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-
+//Validates that the program to be trace exists and has the correct access
 int program_exists(const char* program_name){
   if (access(program_name, X_OK) == -1) {
 	perror("access");

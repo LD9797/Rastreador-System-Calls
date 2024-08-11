@@ -28,7 +28,7 @@ comandos.
 
 El codigo fuente cuenta con un programa de prueba a rastrear, 
 el cual esta en `Auxiliary/test_program.c`. Este programa puede ser 
-construido con el Makefile provisto.
+construido con el Makefile provisto. El programa puede recibir "n" argumentos, los cuales serán impresos en la salida estandar y luego escritos en un archivo .txt.
 
 ## Uso de rastreador
 
@@ -71,21 +71,21 @@ la cual es libseccomp-dev.
 	
 `make build_main`: Compila y genera el ejecutable de `rastreador`.
 
-`make clean`: Borra los ejecutables `test_programa` y `rastreador`.
+`make clean`: Borra los ejecutables `test_program` y `rastreador`.
 	
-`make run`: Rastrea a test_program, sin opciones de `rastreador`, por ejemplo:
+`make run`: Rastrea a test_program, sin opciones de `rastreador`, resulta es una tabla con un recuento de los system call realizados por el programa objetivo, por ejemplo:
 
-  ./rastreador Auxiliary/test_program Arg1 -Arg2
+  ./rastreador Auxiliary/test_program Arg1 Arg2
 
-`make run1`: Rastrea a test_program, con la opción `-v` de `rastreador`, por ejemplo:
+`make run1`: Rastrea a test_program, con la opción `-v` de `rastreador`, muestra cada system call realizado por el programa objetivo, incluyendo la tabla resumen, por ejemplo:
 
-	./rastreador -v Auxiliary/test_program Arg1 -Arg2
+	./rastreador -v Auxiliary/test_program Arg1 Arg2
 
-`make run2`: Rastrea a test_program, con la opción `-V` de `rastreador`, por ejemplo:
+`make run2`: Rastrea a test_program, con la opción `-V` de `rastreador`, muestra cada system call realizado por el programa objetivo y hace una pausa, solicitando que el usuario presione cualquier tecla para continuar, incluyendo la tabla resumen, por ejemplo:
 
-	./rastreador -V Auxiliary/test_program -Arg1 Arg2
+	./rastreador -V Auxiliary/test_program Arg1 Arg2
 
-`make run3`: Rastrea el programa `tail` del S.O., utilizando la opción `-v` de rastreador:
+`make run3`: Rastrea el programa `tail` del S.O. utilizando la opción `-v` de rastreador, demostrando que el rastreador permite el uso de parametrós en el programa objetivo:
 
 	./rastreador -v /usr/bin/tail test_file.txt
 
