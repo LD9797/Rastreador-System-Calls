@@ -1,13 +1,4 @@
-# Tarea Corta 1: RASTREADOR DE “System Calls”
-**Instituto Tecnológico de Costa Rica**
-
-**Escuela de Ingeniería en Computación**
-
-**Maestría Académica en Ciencias de la Computación**
-
-**Curso: Sistemas Operativos Avanzados**
-
-**Profesor**: Dr. Francisco Torres
+# RASTREADOR DE “System Calls”
 
 **Elaborado por**: 
   - Juan Jose Cordero 
