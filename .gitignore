@@ -52,6 +52,6 @@ Mkfile.old
 dkms.conf
 
 .idea/
-.vscode/
+.vscode/*
 CMakeLists.txt
 cmake*
